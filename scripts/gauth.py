@@ -26,12 +26,12 @@ class auth:
         Returns:
             Credentials, the obtained credential.
         """
-        home_dir = os.path.expanduser('~')
-        credential_dir = os.path.join(home_dir, '.credentials')
+        cwd_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(cwd_dir, '.credentials')
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
         credential_path = os.path.join(credential_dir,
-                                       'drive-python-quickstart.json')
+                                       'google-drive-credentials.json')
 
         store = Storage(credential_path)
         credentials = store.get()
