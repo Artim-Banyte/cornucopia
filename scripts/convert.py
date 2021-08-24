@@ -13,8 +13,6 @@ import docx  # type: ignore
 import xml.etree.ElementTree as ElTree
 from typing import List, Dict, Union, Tuple, Any
 
-import convert
-
 
 class ConvertVars:
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))

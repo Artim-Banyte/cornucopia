@@ -1,6 +1,6 @@
 from __future__ import print_function
 import pickle
-from google_auth_oauthlib.flow import Flow, InstalledAppFlow
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.auth.transport.requests import Request
@@ -12,6 +12,10 @@ from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
+
+import convert as c
+
+c.convert_vars = c.ConvertVars()
 
 try:
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
@@ -61,6 +65,29 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v3', http=http)
 
+def list_files():
+    API_NAME = 'drive'
+    API_VERSION = 'v3'
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    # Create the google drive api server instance
+    service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
+
+    folder_id = '1pM71zkH5K67nQb-fG5MSdWcegdO97u-u'
+    query = f"parents = '{folder_id}' and trashed=false"
+
+    response = service.files().list(q=query).execute()
+    files = response.get('files')
+    next_page_token = response.get('nextPageToken')
+
+    while next_page_token:
+        response = service.files().list(q=query).execute()
+        files.extend(response.get('files'))
+        next_page_token = response.get('nextPageToken')
+
+    for f in files:
+        print(f)
+
+
 # Create_Service is used to create the google drive api server instance
 def Create_Service(client_secret_file, api_name, api_version, *scopes):
     print(client_secret_file, api_name, api_version, scopes, sep='-')
@@ -109,9 +136,9 @@ def upload_files():
 
     # Folder Id is found by clicking on the folder you want the file to be uploaded to and copy and pasting the last part of the url
     folder_id = '1pM71zkH5K67nQb-fG5MSdWcegdO97u-u'
-    file_name = ['testimage.jpg']
+    file_name = ['owasp_cornucopia_edition_lang_ver_template.docx']
     # Use https://learndataanalysis.org/commonly-used-mime-types/ to find the correct mimetype for your folder type
-    mime_type = ['image/jpeg']
+    mime_type = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 
     # iterates each element within the file list by zipping the contnets inside the file_name and mime_type together
     for file_name, mime_type in zip(file_name, mime_type):
@@ -121,7 +148,7 @@ def upload_files():
 
         }
 
-        media = MediaFileUpload('/Users/artimbanyte/cornucopia/test/test_files/{0}'.format(file_name),
+        media = MediaFileUpload(c.convert_vars.BASE_PATH + '/test/test_files/{0}'.format(file_name),
                                 mimetype=mime_type)
         # Upload the files by uisng the service function
         service.files().create(
@@ -131,13 +158,10 @@ def upload_files():
         ).execute()
 
 
-upload_files()
-
-
 def download_files():
     # file_id is found on gogole drive by opening the wanted file in a new window and copy and pasting the last part of the URL
     file_id = ['1xPcUK1EIBTYQPJQOHJFwB2ciX1VJXUYn']
-    file_name = ['test.jpg']
+    file_name = ['test.pdf']
     API_NAME = 'drive'
     API_VERSION = 'v3'
     SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -162,13 +186,15 @@ def download_files():
         # seeks if the download progress is at 0%
         fh.seek(0)
 
-        with open(os.path.join('/Users/artimbanyte/cornucopia/test/test_files/', file_name), 'wb') as f:
+        with open(os.path.join(c.convert_vars.BASE_PATH + '/test/test_files/', file_name), 'wb') as f:
             f.write(fh.read())
             f.close()
 
 
-download_files()
 
 
 if __name__ == '__main__':
     main()
+    # download_files()
+    list_files()
+    # upload_files()
